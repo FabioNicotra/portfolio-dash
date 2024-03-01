@@ -92,3 +92,4 @@ wheel==0.42.0
 yarg==0.1.9
 yfinance==0.2.37
 zipp==3.17.0
+gunicorn==21.2.0
