@@ -211,7 +211,7 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
     basket.get_data(start_date, end_date)
     data = basket.data
 
-    stocks_mv, minVar_portfolio, maxSharpe_portfolio, efficient_frontier = basket.mv_analysis(investment_start_date)
+    stocks_mv, minVar_portfolio, tangency_portfolio, efficient_frontier = basket.mv_analysis(investment_start_date)
 
     fig = px.scatter(stocks_mv, x='Risk', y='Return', text=stocks_mv.index).update_traces(marker=dict(size=10), name='Stocks')
 
@@ -220,10 +220,10 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
         fig.add_scatter(x=[minVar_portfolio['risk']], y=[minVar_portfolio['return']], mode='markers',
                                  marker=dict(size=10), showlegend=False,
                                  name='Minimum variance portfolio', text='Minimum variance portfolio')
-        # Add max Sharpe portfolio
-        fig.add_scatter(x=[maxSharpe_portfolio['risk']], y=[maxSharpe_portfolio['return']], mode='markers',
+        # Add Tangency portfolio
+        fig.add_scatter(x=[tangency_portfolio['risk']], y=[tangency_portfolio['return']], mode='markers',
                                  marker=dict(size=10, color='red'), showlegend=False,
-                                 name='Max Sharpe portfolio', text='Max Sharpe portfolio')
+                                 name='Tangency portfolio', text='Tangency portfolio')
         # Add efficient frontier
         for i in range(len(fig['data'])):
             if fig['data'][i]['name'] == 'Minimum variance portfolio':
@@ -233,13 +233,13 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
                      name='Minimum variance line', showlegend=False)
         # Add risk-free asset
         for i in range(len(fig['data'])):
-            if fig['data'][i]['name'] == 'Max Sharpe portfolio':
+            if fig['data'][i]['name'] == 'Tangency portfolio':
                 color = fig['data'][i]['marker']['color']
         fig.add_scatter(x=[0], y=[riskFreeRate], mode='markers',
                                  marker=dict(size=10, color=color), showlegend=False,
                                  name='Risk-free asset', text='Risk-free asset')
         # Add market line
-        fig.add_scatter(x=[0, maxSharpe_portfolio['risk']], y=[riskFreeRate, maxSharpe_portfolio['return']],
+        fig.add_scatter(x=[0, tangency_portfolio['risk']], y=[riskFreeRate, tangency_portfolio['return']],
                                  mode='lines', line=dict(color=color, width=1), showlegend=False,
                                  name='Capital market line', text='Capital market line')
         
@@ -301,7 +301,7 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
         assetInputDisabled = True
         return fig, mc_portfolios.to_json(), assetInputDisabled, n_clicks
 
-    stocks_mv, minVar_portfolio, maxSharpe_portfolio, efficient_frontier = basket.mv_analysis(investment_start_date)
+    stocks_mv, minVar_portfolio, tangency_portfolio, efficient_frontier = basket.mv_analysis(investment_start_date)
 
     portfolio = Portfolio(basket, riskFreeRate, includeRiskFree)
     portfolio.set_investment_start(investment_start_date)
@@ -320,8 +320,8 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
     fig.add_scatter(x=[minVar_portfolio['risk']], y=[minVar_portfolio['return']], mode='markers',
                             marker=dict(size=10,), showlegend=False,
                             name='Minimum variance portfolio', text='Minimum variance portfolio')
-    # Add max Sharpe portfolio
-    fig.add_scatter(x=[maxSharpe_portfolio['risk']], y=[maxSharpe_portfolio['return']], mode='markers',
+    # Add Tangency portfolio
+    fig.add_scatter(x=[tangency_portfolio['risk']], y=[tangency_portfolio['return']], mode='markers',
                                  marker=dict(size=10, color='red'), showlegend=False,
                                  name='Market portfolio', text='Market portfolio')
     # Add efficient frontier
@@ -333,14 +333,14 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
 
     if includeRiskFree:
         for i in range(len(fig['data'])):
-            if fig['data'][i]['name'] == 'Max Sharpe portfolio':
+            if fig['data'][i]['name'] == 'Tangency portfolio':
                 color = fig['data'][i]['marker']['color']
         # Add risk-free asset
         fig.add_scatter(x=[0], y=[riskFreeRate], mode='markers',
                                 marker=dict(size=10, color=color), showlegend=False,
                                 name='Risk-free asset', text='Risk-free asset')
         # Add market line
-        fig.add_scatter(x=[0, maxSharpe_portfolio['risk']], y=[riskFreeRate, maxSharpe_portfolio['return']],
+        fig.add_scatter(x=[0, tangency_portfolio['risk']], y=[riskFreeRate, tangency_portfolio['return']],
                                  mode='lines', line=dict(color=color, width=1), showlegend=False,
                                  name='Capital market line', text='Capital market line')
 
@@ -349,12 +349,12 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
 
     # Set axis limits
     x_min = 0 if includeRiskFree else minVar_portfolio['risk']
-    x_max = max(stocks_mv['Risk'].max(), maxSharpe_portfolio['risk'])
+    x_max = max(stocks_mv['Risk'].max(), tangency_portfolio['risk'])
     xlims = [0.9*x_min, x_max*1.1]
     # Set y-axis limits
     y_min = min(stocks_mv['Return'].min(), 0) if includeRiskFree else stocks_mv['Return'].min()
     coeff = 0.9 if y_min > 0 else 1.1
-    y_max = max(maxSharpe_portfolio['return'], stocks_mv['Return'].max())
+    y_max = max(tangency_portfolio['return'], stocks_mv['Return'].max())
     ylims = [coeff*y_min, y_max*1.1]
 
     fig.update_xaxes(range=xlims).update_yaxes(range=ylims)
@@ -466,8 +466,8 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
 # def hover_data(hoverData):
 #     return json.dumps(hoverData, indent=2)
 
-# # Delete before deploying
-# if __name__ == '__main__':
-#     app.run_server(debug=True,)
+# Delete before deploying
+if __name__ == '__main__':
+    app.run_server(debug=True,)
 
-server = app.server
+# server = app.server

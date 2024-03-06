@@ -97,19 +97,19 @@ class Basket:
             self.cov_matrix = cov_matrix
             stocks_mv = pd.DataFrame({'Return': mean_returns, 'Risk': np.sqrt(cov_matrix)}, index=self.tickerList)
             minVar_portfolio = None
-            maxSharpe_portfolio = None
+            tangency_portfolio = None
             efficient_frontier = None
         else:
             cov_matrix = returns.cov()*252
             self.cov_matrix = cov_matrix
             stocks_mv = pd.DataFrame({'Return': mean_returns, 'Risk': np.sqrt(np.diag(cov_matrix))}, index=self.tickerList)
             minVar_portfolio = self.minVar_portfolio()
-            maxSharpe_portfolio = self.maxSharpe_portfolio()
+            tangency_portfolio = self.tangency_portfolio()
             # Find the max value of mu for the efficient frontier
-            y_max = max(maxSharpe_portfolio['return'], stocks_mv['Return'].max())
+            y_max = max(tangency_portfolio['return'], stocks_mv['Return'].max())
             efficient_frontier = self.minimum_variance_line(np.linspace(0,y_max*1.1, 500))
         
-        return stocks_mv, minVar_portfolio, maxSharpe_portfolio, efficient_frontier
+        return stocks_mv, minVar_portfolio, tangency_portfolio, efficient_frontier
     
     def minVar_portfolio(self):
         nAssets = len(self)
@@ -127,9 +127,9 @@ class Basket:
 
         return minVar_portfolio
 
-    def maxSharpe_portfolio(self):
+    def tangency_portfolio(self):
         '''
-        Calculate the max Sharpe portfolio for a given set of mean returns and covariance matrix.
+        Calculate the Tangency portfolio for a given set of mean returns and covariance matrix.
         '''
         nAssets = len(self)
         m = self.mean_returns
