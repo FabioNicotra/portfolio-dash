@@ -213,35 +213,35 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
 
     stocks_mv, minVar_portfolio, tangency_portfolio, efficient_frontier = basket.mv_analysis(investment_start_date)
 
-    fig = px.scatter(stocks_mv, x='Risk', y='Return', text=stocks_mv.index).update_traces(marker=dict(size=10), name='Stocks')
+    fig = px.scatter(stocks_mv, x='Risk', y='Return', text=stocks_mv.index, hover_data={'Return': ':.2f', 'Risk': ':.2f'}, hover_name = stocks_mv.index).update_traces(marker=dict(size=10), name='Stocks',)
 
     if len(tickers) > 1:
         # Add minimum variance portfolio
-        fig.add_scatter(x=[minVar_portfolio['risk']], y=[minVar_portfolio['return']], mode='markers',
-                                 marker=dict(size=10), showlegend=False,
-                                 name='Minimum variance portfolio', text='Minimum variance portfolio')
+        fig.add_scatter(x=[minVar_portfolio['risk']], y=[minVar_portfolio['return']], customdata=minVar_portfolio['weights'],     
+                                mode='markers', marker=dict(size=10), showlegend=False,
+                                name='Minimum variance portfolio', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
         # Add Tangency portfolio
-        fig.add_scatter(x=[tangency_portfolio['risk']], y=[tangency_portfolio['return']], mode='markers',
-                                 marker=dict(size=10, color='red'), showlegend=False,
-                                 name='Tangency portfolio', text='Tangency portfolio')
+        fig.add_scatter(x=[tangency_portfolio['risk']], y=[tangency_portfolio['return']], customdata=tangency_portfolio['weights'], 
+                                mode='markers', marker=dict(size=10, color='red'), showlegend=False,
+                                name='Tangency portfolio', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
         # Add efficient frontier
         for i in range(len(fig['data'])):
             if fig['data'][i]['name'] == 'Minimum variance portfolio':
                 color = fig['data'][i]['marker']['color']
-        fig.add_scatter(x=efficient_frontier['Risk'], y=efficient_frontier['Return'], mode='lines', 
+        fig.add_scatter(x=efficient_frontier['Risk'], y=efficient_frontier['Return'], customdata=efficient_frontier.iloc[2:], mode='lines', 
                      line=dict(color=color, width=1), 
-                     name='Minimum variance line', showlegend=False)
+                     name='Efficient frontier', showlegend=False, hoverinfo='skip')
         # Add risk-free asset
         for i in range(len(fig['data'])):
             if fig['data'][i]['name'] == 'Tangency portfolio':
                 color = fig['data'][i]['marker']['color']
         fig.add_scatter(x=[0], y=[riskFreeRate], mode='markers',
                                  marker=dict(size=10, color=color), showlegend=False,
-                                 name='Risk-free asset', text='Risk-free asset')
+                                 name='Risk-free asset', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
         # Add market line
         fig.add_scatter(x=[0, tangency_portfolio['risk']], y=[riskFreeRate, tangency_portfolio['return']],
                                  mode='lines', line=dict(color=color, width=1), showlegend=False,
-                                 name='Capital market line', text='Capital market line')
+                                 name='Capital market line')
         
         fig.update_xaxes(range=[0, 0.5])
     # Market line and efficient frontier based on ylims
@@ -314,22 +314,22 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
     fig = px.scatter(mc_portfolios, x='Risk', y='Return', color=color, hover_data={**{asset +' weight': ':.2f' for asset in assetList}, **{'Return': ':.2f', 'Risk': ':.2f', 'Sharpe Ratio': ':.2f'}}, opacity=0.5,).update_traces(name='Monte Carlo samples')
     
     # Add the stocks
-    fig.add_scatter(x=stocks_mv['Risk'], y=stocks_mv['Return'], mode='markers', marker=dict(size=7.5,),showlegend=False, name='Stocks', text = [f'<b>{index}</b> <br>Standard deviation: {vol:.2f}<br>Expected return: {ret:.2f}' for index, vol, ret in zip(stocks_mv.index, stocks_mv['Risk'], stocks_mv['Return'])],hoverinfo='text')
+    fig.add_scatter(x=stocks_mv['Risk'], y=stocks_mv['Return'], mode='markers', marker=dict(size=7.5,),showlegend=False, name='Stocks', text = [f'<b>{index}</b> <br>Risk: {vol:.2f}<br>Return: {ret:.2f}' for index, vol, ret in zip(stocks_mv.index, stocks_mv['Risk'], stocks_mv['Return'])], hoverinfo='text')
     
     # Add minimum variance portfolio
     fig.add_scatter(x=[minVar_portfolio['risk']], y=[minVar_portfolio['return']], mode='markers',
                             marker=dict(size=10,), showlegend=False,
-                            name='Minimum variance portfolio', text='Minimum variance portfolio')
+                            name='Minimum variance portfolio', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
     # Add Tangency portfolio
     fig.add_scatter(x=[tangency_portfolio['risk']], y=[tangency_portfolio['return']], mode='markers',
                                  marker=dict(size=10, color='red'), showlegend=False,
-                                 name='Market portfolio', text='Market portfolio')
+                                 name='Tangency portfolio', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
     # Add efficient frontier
     for i in range(len(fig['data'])):
         if fig['data'][i]['name'] == 'Minimum variance portfolio':
             color = fig['data'][i]['marker']['color']
     fig.add_scatter(x=efficient_frontier['Risk'], y=efficient_frontier['Return'], mode='lines', 
-                                 line=dict(color=color,width=1), name='Minimum variance line', showlegend=False)
+                                 line=dict(width=1), name='Efficient frontier', showlegend=False, hoverinfo='skip')
 
     if includeRiskFree:
         for i in range(len(fig['data'])):
@@ -338,14 +338,14 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
         # Add risk-free asset
         fig.add_scatter(x=[0], y=[riskFreeRate], mode='markers',
                                 marker=dict(size=10, color=color), showlegend=False,
-                                name='Risk-free asset', text='Risk-free asset')
+                                name='Risk-free asset', hovertemplate='Risk: %{x:.2f}<br>Return: %{y:.2f}')
         # Add market line
         fig.add_scatter(x=[0, tangency_portfolio['risk']], y=[riskFreeRate, tangency_portfolio['return']],
                                  mode='lines', line=dict(color=color, width=1), showlegend=False,
                                  name='Capital market line', text='Capital market line')
 
-    if len(mc_portfolios) <= 1000:
-        fig.update_layout(transition_duration=500)
+    # if len(mc_portfolios) <= 1000:
+    #     fig.update_layout(transition_duration=500)
 
     # Set axis limits
     x_min = 0 if includeRiskFree else minVar_portfolio['risk']
@@ -412,7 +412,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
                 raise PreventUpdate
             index = clickData['points'][0]['pointNumber']
             asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', line=dict(color='black')))
+            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', line=dict(color='black'))).update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
 
         if hoverData:
             curveNumber = hoverData['points'][0]['curveNumber']
@@ -436,10 +436,12 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
             trace_name = figure['data'][curveNumber]['name']
             if trace_name == 'Monte Carlo samples':
                 portfolio_value = portfolio.evaluate(index, initial_investment)
-                fig = px.line(portfolio_value)
+                fig = px.line(portfolio_value).update_layout(showlegend=False, title='Portfolio value')
             elif trace_name == 'Stocks':
                 asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-                fig = px.line(asset_value).update_traces(line_color='black')
+                fig = px.line(asset_value).update_traces(line_color='black').update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
+            else:
+                raise PreventUpdate
 
         
         if hoverData:
@@ -449,11 +451,13 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
             if trace_name == 'Monte Carlo samples':
                 portfolio_value = portfolio.evaluate(index, initial_investment)
                 fig.add_trace(go.Scatter(x=portfolio_value.index, y=portfolio_value, mode='lines', opacity=0.3))
-            elif trace_name == 'Assets':
+            elif trace_name == 'Stocks':
                 asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
                 fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3, line=dict(color='black')))
+            elif trace_name in ['Minimum variance portfolio', 'Market portfolio']:
+                print()
 
-        fig.update_layout(showlegend=False, title='Portfolio value')
+        fig.update_layout(showlegend=False)
         fig.update_yaxes(range=ylims) if not shortSelling else None
     
     return fig
@@ -466,8 +470,8 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
 # def hover_data(hoverData):
 #     return json.dumps(hoverData, indent=2)
 
-# Delete before deploying
-if __name__ == '__main__':
-    app.run_server(debug=True,)
+# # Delete before deploying
+# if __name__ == '__main__':
+#     app.run_server(debug=True,)
 
-# server = app.server
+server = app.server
