@@ -17,18 +17,18 @@ from dash_bootstrap_templates import load_figure_template
 from dash.exceptions import PreventUpdate
 
     
-def evaluate_portfolio(mc_portfolios, index, data, initialValue):
-    portfolio = mc_portfolios.loc[index]
-    tickers = data.columns
-    nShares = portfolio[[ticker+' weight' for ticker in tickers]].rename({ticker+' weight' : ticker for ticker in tickers})*initialValue/data.iloc[0]
-    portfolio_value = nShares.dot(data.T)
-    return portfolio_value
+# def evaluate_portfolio(mc_portfolios, index, data, initialValue):
+#     portfolio = mc_portfolios.loc[index]
+#     tickers = data.columns
+#     nShares = portfolio[[ticker+' weight' for ticker in tickers]].rename({ticker+' weight' : ticker for ticker in tickers})*initialValue/data.iloc[0]
+#     portfolio_value = nShares.dot(data.T)
+#     return portfolio_value
 
-def evaluate_asset(tickers, index, data, initialValue):
-    asset = data.iloc[:, index] if len(tickers) > 1 else data
-    nShares = initialValue/asset.iloc[0]
-    asset_value = nShares*asset
-    return asset_value
+# def evaluate_asset(tickers, index, data, initialValue):
+#     asset = data.iloc[:, index] if len(tickers) > 1 else data
+#     nShares = initialValue/asset.iloc[0]
+#     asset_value = nShares*asset
+#     return asset_value
 
 # Get a list of symbols from FTSEMIB index
 ftsemib = pd.read_html('https://en.wikipedia.org/wiki/FTSE_MIB')[1]
@@ -36,98 +36,115 @@ ftsemib['ICB Sector'] = ftsemib['ICB Sector'].str.extract(r'\((.*?)\)', expand=F
 
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-load_figure_template("CERULEAN")
+load_figure_template("SLATE")
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.CERULEAN, dbc_css])
+app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE, dbc_css])
 
-app.layout = html.Div([
+input_panel = dbc.Card(
+    children=[
+        html.P('Select assets', className='dbc'),
+        dcc.Dropdown(
+            id='ticker-dropdown',
+            options=[
+                {'label': f"{row['Company']} ({row['Ticker']})", 'value': row['Ticker']}
+                for _, row in ftsemib.iterrows()
+            ],
+            multi=True,
+            className='dbc'
+        ),
+        html.Br(),
+        html.P('Select start date', className='dbc'),
+        dcc.DatePickerSingle(
+            id='start-date',
+            min_date_allowed=dt.date(2010, 1, 1),
+            max_date_allowed=dt.date.today() - dt.timedelta(days=365),
+            initial_visible_month=dt.date.today() - dt.timedelta(days=365),
+            date=dt.date.today() - dt.timedelta(days=365),
+            display_format='DD/MM/YYYY',
+            className='dbc'
+        ),
+        html.Br(),
+        html.P('Select end date', className='dbc'),
+        dcc.Slider(
+            id='analysis-window',
+            min=1,
+            max=10,
+            step=1,
+            value=1,
+            marks=None,
+            tooltip={
+                'placement': 'bottom',
+                'template': '{value} years',
+            },
+            className='dbc'
+        ),
+        html.Br(),
+        html.P('Risk-free rate', className='dbc'),
+        dbc.Input(
+            id='risk-free-rate',
+            value=4,
+            type='number',
+            step=0.1,
+            className='dbc',
+        ),
+        html.Br(),
+        html.P('Options', className='dbc'),
+        dbc.Switch(
+            id='include-risk-free',
+            label='Risk-free investment',
+            value=False,
+            className='dbc'
+        ),
+        dbc.Switch(
+            id='short-selling',
+            label='Short selling',
+            value=False,
+            className='dbc'
+        ),
+        html.Br(),
+        html.P('Select number of portfolios', className='dbc'),
+        dbc.Input(
+            id='n-portfolios',
+            value=1000,
+            type='number',
+            className='dbc'
+        ),
+        dbc.Button(
+            'Run',
+            id='run-button',
+            n_clicks=0,
+            className='dbc'
+        ),
+        html.Br(),
+        html.P('Initial investment', className='dbc'),
+        dbc.Input(
+            id='initial-investment',
+            value=100,
+            type='number',
+            className='dbc'
+        ),
+        dbc.Switch(
+            id='show-short',
+            label='Show short positions',
+            value=False,
+            className='dbc'
+        )
+    ],
+    class_name='dbc'
+)
+
+
+app.layout = dbc.Container([
     dcc.Store(id='store-data'),
     dcc.Store(id='store-portfolios'),
     html.Div(className='dbc',
-             children=[
-                 dbc.Row(
-                     children=[
-                         dbc.Col(
-                             width=2,
-                             children=[dbc.Card([
-                                 html.P('Select assets', className='dbc'),
-                                 dcc.Dropdown(
-                                     id='ticker-dropdown',
-                                     options=[
-                                         {'label': f"{row['Company']} ({row['Ticker']})", 'value': row['Ticker']}
-                                         for _, row in ftsemib.iterrows()
-                                     ],
-                                     multi=True,
-                                     className='dbc'
-                                 ),
-                                 html.Br(),
-
-                                 html.P('Select start date',
-                                        className='dbc'),
-                                 dcc.DatePickerSingle(
-                                     id='start-date',
-                                     min_date_allowed=dt.date(2010, 1, 1),
-                                     max_date_allowed=dt.date.today() - dt.timedelta(days=365),
-                                     initial_visible_month=dt.date.today() - dt.timedelta(days=365),
-                                     date=dt.date.today() - dt.timedelta(days=365),
-                                     display_format='DD/MM/YYYY',
-                                     className='dbc'
-                                 ),
-
-                                 html.Br(),
-                                 html.P('Analysis window',
-                                        className='dbc'),
-                                 dcc.Slider(
-                                     id='analysis-window',
-                                     min=1,
-                                     max=10,
-                                     step=1,
-                                     value=1,
-                                     marks=None,
-                                     tooltip={
-                                         'placement': 'bottom',
-                                         'template': '{value} years',
-                                     },
-                                     className='dbc'
-                                 ),
-                                html.Br(),
-                                html.P('Risk-free rate', className='dbc'),
-                                dbc.Input(
-                                    id='risk-free-rate',
-                                    value=4,
-                                    type='number',
-                                    step=0.1,
-                                    className='dbc',
-                                 ),
-                                 html.Br(),
-                                html.P('Options', className='dbc'),
-                                dbc.Switch(
-                                    id='include-risk-free',
-                                    label='Include risk-free investment',
-                                    value=False,
-                                    className='dbc'
-                                ),
-                                dbc.Switch(
-                                    id='short-selling',
-                                    label='Allow short selling',
-                                    value=False,
-                                    className='dbc'
-                                ),
-                                 html.Br(),
-                                 html.P('Number of samples', className='dbc'),
-                                 dbc.Input(id='n-portfolios', value=1000, type='number', className='dbc'),
-
-                                 dbc.Button('Run',
-                                            id='run-button',
-                                            n_clicks=0,
-                                            className='dbc'),
-
-                                 html.Br(),
-
-                                 html.P('Initial investment', className='dbc'),
-                                 dbc.Input(id='initial-investment', value=100, type='number', className='dbc'),
-                                 dbc.Switch(id='show-short', label='Show short positions', value=False, className='dbc'),
-                             ])]
+            children=[
+                dbc.Row(
+                    class_name='dbc',
+                    children=[
+                            dbc.Col(
+                            width=2,
+                            children=input_panel
                          ),
                          dbc.Col(
                              width=10,
@@ -180,7 +197,8 @@ app.layout = html.Div([
              ),
 
 
-])
+], fluid=True,
+class_name='dbc')
 
 
 # Download data and plot mean-variance graph for selected assets
@@ -470,8 +488,8 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
 # def hover_data(hoverData):
 #     return json.dumps(hoverData, indent=2)
 
-# # Delete before deploying
-# if __name__ == '__main__':
-#     app.run_server(debug=True,)
+# Delete before deploying
+if __name__ == '__main__':
+    app.run_server(debug=True,)
 
-server = app.server
+# server = app.server
