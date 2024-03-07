@@ -36,9 +36,10 @@ ftsemib['ICB Sector'] = ftsemib['ICB Sector'].str.extract(r'\((.*?)\)', expand=F
 
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-load_figure_template("SLATE")
+load_figure_template("SANDSTONE_DARK")
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE, dbc_css])
+app = Dash(__name__, external_stylesheets=[dbc.themes.SANDSTONE, dbc_css])
+
 
 input_panel = dbc.Card(
     children=[
@@ -430,7 +431,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
                 raise PreventUpdate
             index = clickData['points'][0]['pointNumber']
             asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', line=dict(color='black'))).update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
+            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines',)).update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
 
         if hoverData:
             curveNumber = hoverData['points'][0]['curveNumber']
@@ -439,9 +440,9 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
                 raise PreventUpdate
             index = hoverData['points'][0]['pointNumber']
             asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3, line=dict(color='black')))
+            fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3,))
 
-        fig.update_yaxes(range=ylims).update_layout(showlegend=False, title='Portfolio value')
+        fig.update_yaxes(range=ylims).update_layout(showlegend=False,)
         # else:
         #     raise PreventUpdate
     else:
@@ -457,7 +458,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
                 fig = px.line(portfolio_value).update_layout(showlegend=False, title='Portfolio value')
             elif trace_name == 'Stocks':
                 asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-                fig = px.line(asset_value).update_traces(line_color='black').update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
+                fig = px.line(asset_value).update_layout(showlegend=False, title=f'{portfolio.basket.tickerList[index]}')
             else:
                 raise PreventUpdate
 
@@ -471,7 +472,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
                 fig.add_trace(go.Scatter(x=portfolio_value.index, y=portfolio_value, mode='lines', opacity=0.3))
             elif trace_name == 'Stocks':
                 asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
-                fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3, line=dict(color='black')))
+                fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3,))
             elif trace_name in ['Minimum variance portfolio', 'Market portfolio']:
                 print()
 
