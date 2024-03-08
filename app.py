@@ -36,9 +36,19 @@ ftsemib['ICB Sector'] = ftsemib['ICB Sector'].str.extract(r'\((.*?)\)', expand=F
 
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-load_figure_template("SANDSTONE_DARK")
+# load_figure_template("sandstone_dark")
+# sandstone_dark = 'assets/sandstone_dark.css'
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.SANDSTONE, dbc_css])
+figure_template = {
+    'template': 'plotly_dark',
+    'plot_bgcolor': '#212529',
+    'paper_bgcolor': '#212529',
+    'font_color': '#c0c0c0'
+}
+# Set colorbar template
+px.defaults.color_continuous_scale = px.colors.sequential.Pinkyl
+
+app = Dash(__name__, external_stylesheets=[dbc.themes.SANDSTONE, dbc_css,])
 
 
 input_panel = dbc.Card(
@@ -205,7 +215,7 @@ app.layout = dbc.Container([
                                                     children=[
                                                         dcc.Graph(
                                                             id='markowitz-graph',
-                                                            figure=go.Figure(),
+                                                            figure=go.Figure().update_layout(figure_template),
                                                             clear_on_unhover=True,
                                                             style={
                                                                 'flex-shrink': '1',
@@ -213,7 +223,7 @@ app.layout = dbc.Container([
                                                         ),
                                                         dcc.Graph(
                                                             id='portfolio-value',
-                                                            figure=go.Figure(),
+                                                            figure=go.Figure().update_layout(figure_template),
                                                             style={
                                                                 'flex-shrink': '1',
                                                             }
@@ -255,7 +265,7 @@ app.layout = dbc.Container([
 def select_assets(tickers, investment_start_date, window, riskFreeRate):
     riskFreeRate = riskFreeRate/100
     if not tickers:
-        fig = go.Figure().update_xaxes(title='Risk', range=[0, 0.5]).update_yaxes(title='Return',range=[0, 0.4]).update_layout(transition_duration=500)
+        fig = go.Figure().update_layout(figure_template).update_xaxes(title='Risk', range=[0, 0.5]).update_yaxes(title='Return',range=[0, 0.4])
         data = pd.DataFrame()
         return fig, data.to_json()
 
@@ -303,7 +313,7 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
         
         fig.update_xaxes(range=[0, 0.5])
     # Market line and efficient frontier based on ylims
-    fig.update_traces(textposition='top center').update_layout(transition_duration=100, title='Asset selection')
+    fig.update_traces(textposition='top center').update_layout(title='Asset selection',**figure_template)
 
     return fig, data.to_json()
 
@@ -329,7 +339,7 @@ def select_assets(tickers, investment_start_date, window, riskFreeRate):
 def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, window, includeRiskFree, shortSelling, showShort, n_clicks):
     riskFreeRate = riskFreeRate/100
     if not tickers:
-        fig = go.Figure()
+        fig = go.Figure().update_layout(figure_template)
         return fig, None, False, None
     
     if not n_clicks:
@@ -353,7 +363,7 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
     analysis_returns = data[:investment_start_date].pct_change().dropna()
 
     if analysis_returns.empty:
-        fig = go.Figure().update_layout(transition_duration=500)
+        fig = go.Figure().update_layout(figure_template).update_layout(transition_duration=500)
         n_clicks = None
         mc_portfolios = pd.DataFrame()
         assetInputDisabled = True
@@ -417,7 +427,7 @@ def mc_allocation(tickers, riskFreeRate, n_portfolios, investment_start_date, wi
 
     fig.update_xaxes(range=xlims).update_yaxes(range=ylims)
 
-    fig.update_layout(title='Monte Carlo Simulation')
+    fig.update_layout(title='Monte Carlo Simulation', **figure_template)
 
     n_clicks = None
 
@@ -457,7 +467,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
 
     outOfSampleData = basket.data[investment_start_date:]
     ylims = [((initial_investment/outOfSampleData.iloc[0])*outOfSampleData.min()).min(), ((initial_investment/outOfSampleData.iloc[0])*outOfSampleData.max()).max()]
-    fig = go.Figure()
+    fig = go.Figure().update_layout(figure_template)
     
     if not clickData and not hoverData:
         raise PreventUpdate
@@ -481,7 +491,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
             asset_value = portfolio.basket.stocks[index].evaluate(initial_investment, investment_start_date)
             fig.add_trace(go.Scatter(x=asset_value.index, y=asset_value, mode='lines', opacity=0.3,))
 
-        fig.update_yaxes(range=ylims).update_layout(showlegend=False,)
+        fig.update_yaxes(range=ylims).update_layout(showlegend=False, **figure_template)
         # else:
         #     raise PreventUpdate
     else:
@@ -515,7 +525,7 @@ def plot_portfolio(tickers, riskFreeRate, window, includeRiskFree, shortSelling,
             elif trace_name in ['Minimum variance portfolio', 'Market portfolio']:
                 print()
 
-        fig.update_layout(showlegend=False)
+        fig.update_layout(showlegend=False, **figure_template)
         fig.update_yaxes(range=ylims) if not shortSelling else None
     
     return fig
