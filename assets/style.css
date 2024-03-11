@@ -1,0 +1,33 @@
+html {
+    font-size: 100%;
+    overflow-x: hidden;
+}
+
+.app-container {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    justify-content: space-between;
+    gap: 0;
+}
+
+#input-column {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    flex-basis: 300px;
+}
+
+#tabs {
+    padding: 2rem;
+}
+
+@media (max-width: 576px) {
+    .app-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* #tabs {
+        height: 100vh;
+    } */
+}
