@@ -1,6 +1,7 @@
+import datetime as dt
+from io import StringIO
 import numpy as np
 import pandas as pd
-import datetime as dt
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -8,8 +9,6 @@ import plotly.graph_objects as go
 import yfinance as yf
 
 from pflib import *
-
-from io import StringIO
 
 from dash import html, dcc, Input, Output, Dash
 import dash_bootstrap_components as dbc
@@ -51,7 +50,8 @@ px.defaults.color_continuous_scale = px.colors.diverging.Temps
 app = Dash(
     __name__,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
-    external_stylesheets=[dbc.themes.SANDSTONE, dbc_css],)
+    external_stylesheets=[dbc.themes.SANDSTONE, dbc_css],
+    )
 
 server = app.server
 
@@ -181,7 +181,7 @@ input_column = html.Div(
 )
 
 
-app.layout = dbc.Container(
+app.layout = html.Div(
     className='dbc',
     children=[
     dcc.Store(id='store-data'),
@@ -199,7 +199,7 @@ app.layout = dbc.Container(
                             id='tab-1',
                             className='dbc',
                             children=[
-                                dbc.Container(
+                                html.Div(
                                     id='plots',
                                     children=[
                                         dcc.Graph(
